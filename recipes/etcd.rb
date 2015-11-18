@@ -73,9 +73,9 @@ template '/etc/etcd/etcd.conf' do
 end
 
 # generate systemd file
-cookbook_file '/usr/lib/systemd/system/etcd.service' do
-  source 'etcd.service'
-  mode 00644
+cookbook_file '/etc/init.d/etcd' do
+  source 'etcd.initd'
+  mode 00755
   action :create
 end
 

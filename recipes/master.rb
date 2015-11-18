@@ -74,10 +74,10 @@ node.set['etcd']['servers'] = etcd_servers.join(',')
 end
 
 # generate systemd file
-%w(kube-apiserver.service kube-controller-manager.service kube-scheduler.service).each do |service|
-  cookbook_file "/usr/lib/systemd/system/#{service}" do
-    source service
-    mode 00644
+%w(kube-apiserver kube-controller-manager kube-scheduler).each do |service|
+  cookbook_file "/etc/init.d/#{service}" do
+    source "#{service}.initd"
+    mode 00755
     action :create
   end
 end

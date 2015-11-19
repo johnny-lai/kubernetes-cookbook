@@ -1,139 +1,78 @@
-#!/bin/sh
+#!/bin/bash
 #
-#       /etc/rc.d/init.d/etcd
+# Init file for Monit system monitor
+# Written by Stewart Adam <s.adam@diffingo.com>
+# based on script by Dag Wieers <dag@wieers.com>.
 #
-#       Daemon for etcd
+# chkconfig: - 98 02
+# description: Utility for monitoring services on a Unix system
 #
-# chkconfig:   2345 95 95
-# description: Etcd Server
-
-### BEGIN INIT INFO
-# Provides:       etcd
-# Required-Start: $network cgconfig
-# Required-Stop:
-# Should-Start:
-# Should-Stop:
-# Default-Start: 2 3 4 5
-# Default-Stop:  0 1 6
-# Short-Description: Etcd Server
-# Description: Etcd Server
-### END INIT INFO
+# processname: monit
+# config: /etc/monit.conf
+# pidfile: /var/run/monit.pid
+# Short-Description: Monit is a system monitor
 
 # Source function library.
-. /etc/rc.d/init.d/functions
+. /etc/init.d/functions
 
+### Default variables
 prog="etcd"
-exec="/usr/bin/$prog"
 pidfile="/var/run/$prog.pid"
-lockfile="/var/lock/subsys/$prog"
-logfile="/var/log/$prog"
+logfile="/tmp/$prog.log"
+CONFIG="/etc/etcd.conf"
 
-[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
-[ -e /etc/sysconfig/$prog-storage ] && . /etc/sysconfig/$prog-storage
+# Check if requirements are met
+[ -x /usr/bin/etcd ] || exit 1
+# [ -r "$CONFIG" ] || exit 1
 
-prestart() {
-    service cgconfig status > /dev/null
-
-    if [[ $? != 0 ]]; then
-        service cgconfig start
-    fi
-
-}
+RETVAL=0
 
 start() {
-    [ -x $exec ] || exit 5
-
-    check_for_cleanup
-
-    if ! [ -f $pidfile ]; then
-        prestart
-        printf "Starting $prog:\t"
-        echo "\n$(date)\n" >> $logfile
-        cd /var/lib/etcd && $exec &>> $logfile &
-        pid=$!
-        touch $lockfile
-        # wait up to 10 seconds for the pidfile to exist.  see
-        # https://github.com/docker/docker/issues/5359
-        tries=0
-        while [ ! -f $pidfile -a $tries -lt 10 ]; do
-            sleep 1
-            tries=$((tries + 1))
-        done
-        success
+        echo -n $"Starting $prog: "
+        $prog &>> $logfile &
+	echo $! > $pidfile
+        RETVAL=$?
+	success
         echo
-    else
-        failure
-        echo
-        printf "$pidfile still exists...\n"
-        exit 7
-    fi
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+        return $RETVAL
 }
 
 stop() {
-    echo -n $"Stopping $prog: "
-    killproc -p $pidfile -d 300 $prog
-    retval=$?
-    echo
-    [ $retval -eq 0 ] && rm -f $lockfile
-    return $retval
+        echo -n $"Shutting down $prog: "
+        killproc -p $pidfile
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+        return $RETVAL
 }
 
 restart() {
-    stop
-    start
-}
-
-reload() {
-    restart
-}
-
-force_reload() {
-    restart
-}
-
-rh_status() {
-    status -p $pidfile $prog
-}
-
-rh_status_q() {
-    rh_status >/dev/null 2>&1
-}
-
-check_for_cleanup() {
-    if [ -f ${pidfile} ]; then
-        /bin/ps -fp $(cat ${pidfile}) > /dev/null || rm ${pidfile}
-    fi
+        stop
+        start
 }
 
 case "$1" in
-    start)
-        rh_status_q && exit 0
-        $1
+  start)
+        start
         ;;
-    stop)
-        rh_status_q || exit 0
-        $1
+  stop)
+        stop
         ;;
-    restart)
-        $1
-        ;;
-    reload)
-        rh_status_q || exit 7
-        $1
-        ;;
-    force-reload)
-        force_reload
-        ;;
-    status)
-        rh_status
-        ;;
-    condrestart|try-restart)
-        rh_status_q || exit 0
+  restart)
         restart
         ;;
-    *)
-        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
-        exit 2
+  condrestart)
+        [ -e /var/lock/subsys/$prog ] && restart
+        RETVAL=$?
+        ;;
+  status)
+        status $prog
+        RETVAL=$?
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+        RETVAL=1
 esac
 
-exit $?
+exit $RETVAL

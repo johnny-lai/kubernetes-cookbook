@@ -39,7 +39,7 @@ default['kube']['kubelet']['args'] = ''
 default['kube']['proxy']['args'] = ''
 
 default['kube']['interface'] = 'eth0'
-default['kube']['package'] = 'https://github.com/GoogleCloudPlatform/kubernetes/releases/download/v0.5.4/kubernetes.tar.gz'
+default['kube']['package'] = 'https://github.com/GoogleCloudPlatform/kubernetes/releases/download/v1.0.7/kubernetes.tar.gz'
 
 # related packages
 default['kube']['go']['package'] = 'go'

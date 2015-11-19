@@ -20,6 +20,7 @@ prog="etcd"
 pidfile="/var/run/$prog.pid"
 logfile="/tmp/$prog.log"
 CONFIG="/etc/etcd.conf"
+other_args="--addr=127.0.0.1:4001 --bind-addr=0.0.0.0:4001 --data-dir=/var/etcd/data"
 
 # Check if requirements are met
 [ -x /usr/bin/etcd ] || exit 1
@@ -29,8 +30,7 @@ RETVAL=0
 
 start() {
         echo -n $"Starting $prog: "
-        $prog &>> $logfile &
-	echo $! > $pidfile
+        docker run --net=host -d gcr.io/google_containers/etcd:2.0.9 /usr/local/bin/etcd $other_args > $pidfile
         RETVAL=$?
 	success
         echo
@@ -40,8 +40,11 @@ start() {
 
 stop() {
         echo -n $"Shutting down $prog: "
-        killproc -p $pidfile
-        RETVAL=$?
+        RETVAL=0
+        if [ -f $pidfile ]; then
+                docker kill `cat $pidfile`
+                RETVAL=$?
+        fi
         echo
         [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
         return $RETVAL

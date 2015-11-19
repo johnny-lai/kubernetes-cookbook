@@ -13,5 +13,8 @@ KUBELET_PORT="--port=<%= node['kube']['kubelet']['bind-port'] %>"
 # KUBELET_HOSTNAME="--hostname_override=127.0.0.1"
 KUBELET_HOSTNAME=""
 
+# Location of the api server
+KUBELET_API_SERVER="--api_servers=http://<%= node['kube']['api']['bind-address'] %>:<%= node['kube']['api']['bind-port'] %>"
+
 # Add your own!
 KUBELET_ARGS="<%= node['kube']['kubelet']['args'] %>"

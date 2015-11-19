@@ -29,7 +29,7 @@ lockfile="/var/lock/subsys/$prog"
 logfile="/var/log/$prog"
 
 [ -e /etc/kubernetes/config ] && . /etc/kubernetes/config
-[ -e /etc/kubernetes/kublet ] && . /etc/kubernetes/kublet
+[ -e /etc/kubernetes/kubelet ] && . /etc/kubernetes/kubelet
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 [ -e /etc/sysconfig/$prog-storage ] && . /etc/sysconfig/$prog-storage
 
@@ -55,11 +55,11 @@ start() {
         $exec \
             ${KUBE_LOGTOSTDERR} \
             ${KUBE_LOG_LEVEL} \
-            ${KUBE_ETCD_SERVERS} \
             ${KUBELET_ADDRESSES} \
             ${KUBELET_PORT} \
             ${KUBELET_HOSTNAME} \
             ${KUBE_ALLOW_PRIV} \
+            ${KUBELET_API_SERVER} \
             ${KUBELET_ARGS} &>> $logfile &
         pid=$!
         touch $lockfile
